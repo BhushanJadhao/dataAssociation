@@ -2,60 +2,55 @@ var express = require('express');
 const userModel = require("./users");
 const postModel = require("./posts");
 var router = express.Router();
+const localStrategy=require("passport-local");
+const passport = require('passport');
+
+function isLoggedIn(req,res,next){
+  if(req.isAuthenticated()){
+    return next(); 
+  }
+  res.redirect("/login");
+}
+passport.use(new localStrategy(userModel.authenticate()));
 
 
 /* GET home page. */
 router.get('/', function (req, res, next) {
-  res.render('index', { title: 'Express' });
+  res.render('index');
 });
-
-router.get("/createuser", async (req, res) => {
-  try {
-    let createduser = await userModel.create({
-      username: "BhushanJadhao",
-      password: "Bhushan",
-      posts: [],
-      email: "bhushanjadhao18@gmail.com",
-      fullname: "Bhushan Jadhao",
-    });
-    res.send(createduser);
-  } catch (error) {
-    console.error(error);
-    res.status(500).send("Internal Server Error");
-  }
+router.get("/profile",isLoggedIn,function(req,res,next){
+  res.send("profile");
 });
-
-router.get("/alluserpost",async (req,res)=>{
-let user=await userModel
-.findOne({_id:"65be1c6b64cc656e0d29cc3a"})
-.populate("posts");
-res.send(user);
+router.get("/feed",(req,res)=>{
+  res.render("feed");
 })
+router.get("/login",(req,res)=>{
+  res.render("login");
+})
+router.post("/register",function(req,res){
+  const userData=new userModel({
+    username:req.body.username,
+    email:req.body.email,
+    fullName:req.body.fullname
+  });
+  userModel.register(userData,req.body.password)
+    .then(function( ){
+      passport.authenticate("local")(req,res,function(){
+        res.redirect("/profile");
+      })
+    })
+});
+router.post("/login",passport.authenticate("local",{
+  successRedirect:"/profile",
+  failureRedirect:"/login"
+}),function(req,res){});
 
-router.get("/createpost", async (req, res) => {
-  try {
-    
-    let createdpost = await postModel.create({
-      postText: "hello kasie ho app log....",
-      user: "65be1c6b64cc656e0d29cc3a"
-    });
-
-    let user = await userModel.findById("65be1c6b64cc656e0d29cc3a");
-
-   
-    if (!user) {
-      return res.status(404).send("User not found");
-    }
-
-    user.posts.push(createdpost._id);
-
-    await user.save();
-
-    res.send("Post created successfully");
-  } catch (error) {
-    console.error(error);
-    res.status(500).send("Internal Server Error");
-  }
+router.get("/logout",function(req,res,next){
+  req.logout(function(err) {
+    if (err) { return next(err); }
+    res.redirect('/');
+  
+  });
 });
 
 module.exports = router;

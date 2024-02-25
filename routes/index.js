@@ -19,7 +19,7 @@ router.get('/', function (req, res, next) {
   res.render('index');
 });
 router.get("/profile",isLoggedIn,function(req,res,next){
-  res.send("profile");
+  res.render("profile");
 });
 router.get("/feed",(req,res)=>{
   res.render("feed");
@@ -36,10 +36,11 @@ router.post("/register",function(req,res){
   userModel.register(userData,req.body.password)
     .then(function( ){
       passport.authenticate("local")(req,res,function(){
-        res.redirect("/profile");
+        res.render("profile");
       })
     })
 });
+
 router.post("/login",passport.authenticate("local",{
   successRedirect:"/profile",
   failureRedirect:"/login"

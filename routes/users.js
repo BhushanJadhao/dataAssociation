@@ -22,7 +22,9 @@ const userSchema = new mongoose.Schema({
     required: true,
     unique: true,
   },
-  fullname: String,
+  fullname:{
+    type:String,
+  } 
 });
 
 // Create a Mongoose model based on the schema
